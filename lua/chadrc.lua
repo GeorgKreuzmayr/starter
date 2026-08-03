@@ -21,7 +21,6 @@ M.base46 = {
     LineNr         = { fg = "grey_fg" },
     CursorLineNr   = { fg = "light_grey",   bold = true },
     CursorLine     = { bg = "darker_black" },
-    Visual         = { bg = "one_bg2" },
     SignColumn     = { bg = "black" },
     WinSeparator   = { fg = "line" },
 
@@ -111,10 +110,87 @@ M.base46 = {
     DiagnosticInfo  = { fg = "blue" },
     DiagnosticHint  = { fg = "cyan" },
 
-    -- Black cursor
-    Cursor     = { bg = "#002B36", fg = "#FDF6E3" },
+    -- ── Cursor / selection ───────────────────────────────────────────
+    -- Dark cursor, and a selection strong enough to read on cream.
+    -- `guicursor` binds the Cursor group explicitly (see init.lua),
+    -- otherwise the terminal keeps its own cursor colour.
+    Cursor         = { bg = "#002B36", fg = "#FDF6E3" },
+    Visual         = { bg = "#93A1A1", fg = "#FDF6E3" },
+    VisualNOS      = { bg = "#93A1A1", fg = "#FDF6E3" },
+
+    -- ── Dashboard ────────────────────────────────────────────────────
+    -- base46 defaults the footer to red, which shouts on a light bg.
+    NvDashFooter   = { fg = "grey" },
+  },
+
+  -- hl_override only reaches groups base46 already defines, and silently
+  -- drops the rest. CursorIM / TermCursor aren't in base46's defaults, so
+  -- they have to be *added* rather than overridden.
+  hl_add = {
     CursorIM   = { bg = "#002B36", fg = "#FDF6E3" },
     TermCursor = { bg = "#002B36", fg = "#FDF6E3" },
+  },
+}
+
+M.ui = {
+  statusline = {
+    theme = "default",
+    separator_style = "round",
+  },
+
+  -- Bordered so the picker reads as a panel floating over the buffer
+  -- instead of a full-screen wash of the same cream (see plugins/telescope.lua
+  -- for the matching rounded border characters and reduced size).
+  telescope = { style = "bordered" },
+}
+
+M.nvdash = {
+  load_on_startup = true,
+
+  header = {
+    "                                 ",
+    "███╗   ██╗██╗   ██╗██╗███╗   ███╗",
+    "████╗  ██║██║   ██║██║████╗ ████║",
+    "██╔██╗ ██║██║   ██║██║██╔████╔██║",
+    "██║╚██╗██║╚██╗ ██╔╝██║██║╚██╔╝██║",
+    "██║ ╚████║ ╚████╔╝ ██║██║ ╚═╝ ██║",
+    "╚═╝  ╚═══╝  ╚═══╝  ╚═╝╚═╝     ╚═╝",
+    "                                 ",
+  },
+
+  -- Keys match this config's actual mappings, not NvChad's defaults.
+  buttons = {
+    { txt = "  Find File", keys = "<leader><leader>", cmd = "Telescope find_files" },
+    { txt = "  Recent Files", keys = "<leader>fo", cmd = "Telescope oldfiles" },
+    { txt = "󰈭  Live Grep", keys = "<leader>fw", cmd = "Telescope live_grep" },
+    {
+      txt = "󰺯  Grep (rg args)",
+      keys = "<leader>fW",
+      cmd = "lua require('telescope').extensions.live_grep_args.live_grep_args()",
+    },
+    -- No `keys`: there's no global mapping for this, and nvdash would try to
+    -- register an empty LHS. Still reachable with <CR> on the line.
+    { txt = "  Config", cmd = "edit " .. vim.fn.stdpath "config" .. "/lua/chadrc.lua" },
+    { txt = "󱥚  Themes", keys = "<leader>th", cmd = "lua require('nvchad.themes').open()" },
+    { txt = "  Mappings", keys = "<leader>ch", cmd = "NvCheatsheet" },
+
+    { txt = "─", hl = "NvDashFooter", no_gap = true, rep = true },
+
+    {
+      txt = function()
+        local stats = require("lazy").stats()
+        return ("  %d/%d plugins in %d ms"):format(
+          stats.loaded,
+          stats.count,
+          math.floor(stats.startuptime)
+        )
+      end,
+      hl = "NvDashFooter",
+      no_gap = true,
+      content = "fit",
+    },
+
+    { txt = "─", hl = "NvDashFooter", no_gap = true, rep = true },
   },
 }
 
