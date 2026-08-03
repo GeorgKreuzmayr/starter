@@ -4,6 +4,10 @@
 ---@type ChadrcConfig
 local M = {}
 
+-- Disable NvChad's LSP signature-help popup that appears when typing
+-- a function call's opening paren (e.g. `std.log.info(`).
+M.lsp = { signature = false }
+
 M.base46 = {
   theme = "solarized_light_custom",
 

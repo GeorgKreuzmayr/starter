@@ -84,4 +84,7 @@ end, { desc = "Fold all functions" })
 -- Split the current file vertically
 map("n", "<leader>sv", "<cmd>vsplit<cr>", { desc = "Split window vertically" })
 
+-- Markdown: toggle rendered view (see plugins/markdown.lua)
+map("n", "<leader>mr", "<cmd>RenderMarkdown buf_toggle<cr>", { desc = "Markdown render toggle" })
+
 -- map({ "n", "i", "v" }, "<C-s>", "<cmd> w <cr>")
