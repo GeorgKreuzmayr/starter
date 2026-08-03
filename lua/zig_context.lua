@@ -8,61 +8,57 @@ local M = {}
 
 -- ── helpers ──────────────────────────────────────────────────────────────────
 
---- Extract the IDENTIFIER name from a FnProto node.
-local function fn_name(fnproto)
-  for i = 0, fnproto:named_child_count() - 1 do
-    local child = fnproto:named_child(i)
-    if child:type() == "IDENTIFIER" then
+-- Container nodes that take their name from whatever declares them. The old
+-- tree-sitter-zig grammar rolled all of these into a single `ContainerDecl`.
+local container_types = {
+  struct_declaration = true,
+  enum_declaration = true,
+  union_declaration = true,
+  opaque_declaration = true,
+  error_set_declaration = true,
+}
+
+--- Text of a node's `name:` field. `function_declaration` has one; container
+--- and variable declarations do not.
+local function field_name(node)
+  local field = node:field("name")[1]
+  return field and vim.treesitter.get_node_text(field, 0) or nil
+end
+
+--- First identifier child, for nodes without a `name:` field.
+local function first_identifier(node)
+  for child in node:iter_children() do
+    if child:type() == "identifier" then
       return vim.treesitter.get_node_text(child, 0)
     end
   end
 end
 
---- Extract the IDENTIFIER name from a VarDecl node.
-local function var_name(vardecl)
-  for i = 0, vardecl:named_child_count() - 1 do
-    local child = vardecl:named_child(i)
-    if child:type() == "IDENTIFIER" then
-      return vim.treesitter.get_node_text(child, 0)
-    end
-  end
-end
-
---- Given a ContainerDecl node, find the name that owns it.
---- Returns a string or nil.
+--- The name a container is declared under: `const <Name> = struct { … }`.
+--- A container returned from a generic fn (`fn F(...) type { return struct { … } }`)
+--- gets no name of its own — the enclosing function_declaration is already
+--- picked up by the walker, so naming it here would just repeat it.
 local function container_name(container)
-  local ancestor = container:parent()
-  while ancestor do
-    local atype = ancestor:type()
-    if atype == "VarDecl" then
-      -- pub const <Name> = struct { … }
-      return var_name(ancestor)
-    elseif atype == "Decl" then
-      -- fn <Name>(...) { return struct { … } }
-      for i = 0, ancestor:named_child_count() - 1 do
-        local sibling = ancestor:named_child(i)
-        if sibling:type() == "FnProto" then
-          return fn_name(sibling)
+  local parent = container:parent()
+  if parent and parent:type() == "variable_declaration" then
+    return first_identifier(parent)
+  end
+end
+
+--- Name of a test_declaration: `test "some name"` or `test some_decl`.
+local function test_name(testdecl)
+  for child in testdecl:iter_children() do
+    local t = child:type()
+    if t == "string" then
+      -- string_content is the text inside the quotes
+      for grandchild in child:iter_children() do
+        if grandchild:type() == "string_content" then
+          return vim.treesitter.get_node_text(grandchild, 0)
         end
       end
-      return nil
-    elseif atype == "source_file" then
-      return nil
-    end
-    ancestor = ancestor:parent()
-  end
-end
-
---- Extract the string literal or identifier name from a TestDecl node.
-local function test_name(testdecl)
-  for i = 0, testdecl:named_child_count() - 1 do
-    local child = testdecl:named_child(i)
-    local t = child:type()
-    if t == "STRINGLITERALSINGLE" or t == "StringLiteral" or t == "string_literal" then
       local raw = vim.treesitter.get_node_text(child, 0)
-      -- strip surrounding quotes
-      return raw:match('^"(.*)"$') or raw
-    elseif t == "IDENTIFIER" then
+      return raw:match '^"(.*)"$' or raw
+    elseif t == "identifier" then
       return vim.treesitter.get_node_text(child, 0)
     end
   end
@@ -88,48 +84,21 @@ local function get_zig_context()
   local chain = {}
   local current = node
 
+  -- The signature line and the body are both inside function_declaration, so a
+  -- single walk up from the cursor hits each enclosing declaration exactly once.
   while current do
     local kind = current:type()
 
-    if kind == "Block" then
-      -- Collect the function this Block belongs to
-      local decl = current:parent()
-      if decl and decl:type() == "Decl" then
-        for i = 0, decl:named_child_count() - 1 do
-          local sibling = decl:named_child(i)
-          if sibling:type() == "FnProto" then
-            local name = fn_name(sibling)
-            if name then
-              table.insert(chain, { kind = "fn", name = name })
-            end
-            break
-          end
-        end
-      end
-
-    elseif kind == "FnProto" then
-      -- Cursor is sitting directly on the fn signature line
-      local name = fn_name(current)
+    if kind == "function_declaration" then
+      local name = field_name(current)
       if name then
-        -- Only add if not already added by the Block handler
-        local already = false
-        for _, entry in ipairs(chain) do
-          if entry.kind == "fn" and entry.name == name then
-            already = true; break
-          end
-        end
-        if not already then
-          table.insert(chain, { kind = "fn", name = name })
-        end
+        table.insert(chain, { kind = "fn", name = name })
       end
 
-    elseif kind == "TestDecl" then
-      -- Cursor is inside a test block
-      local name = test_name(current)
-      table.insert(chain, { kind = "test", name = name })
+    elseif kind == "test_declaration" then
+      table.insert(chain, { kind = "test", name = test_name(current) })
 
-    elseif kind == "ContainerDecl" then
-      -- Collect the struct/fn that owns this container
+    elseif container_types[kind] then
       local name = container_name(current)
       if name then
         table.insert(chain, { kind = "struct", name = name })

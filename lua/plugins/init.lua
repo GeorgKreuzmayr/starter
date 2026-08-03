@@ -24,15 +24,26 @@ return {
     end,
   },
 
-{
-  "nvim-treesitter/nvim-treesitter",
-  opts = {
-    ensure_installed = {
-      "vim", "lua", "vimdoc",
-      "html", "css", "zig",
+  -- lazy.nvim merges opts index-by-index, so this list replaces NvChad's
+  -- positionally -- its "luadoc" and "printf" have to be repeated here or they
+  -- are silently dropped.
+  --
+  -- On nvim-treesitter's `main` branch `ensure_installed` is not a real option
+  -- (setup() only takes install_dir); NvChad reads it from the merged opts in
+  -- its :TSInstallAll command, which only runs from the plugin's build step.
+  -- Adding a language here therefore needs a :TSInstall <lang> or :Lazy build
+  -- nvim-treesitter to take effect.
+  {
+    "nvim-treesitter/nvim-treesitter",
+    opts = {
+      ensure_installed = {
+        "lua", "luadoc", "printf", "vim", "vimdoc",
+        "html", "css", "zig",
+      },
     },
   },
-},  -- test new blink
+
+  -- test new blink
   -- { import = "nvchad.blink.lazyspec" },
 
   -- {

@@ -6,7 +6,7 @@ local M = {}
 
 -- Node types that represent a function definition, keyed by treesitter language.
 local fn_node_types = {
-  zig = { FnProto = true },
+  zig = { function_declaration = true },
   lua = { function_declaration = true, function_definition = true },
   c = { function_definition = true },
   cpp = { function_definition = true },
