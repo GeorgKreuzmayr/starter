@@ -81,4 +81,7 @@ map("n", "<leader>fF", function()
   require("folding").fold_all_functions()
 end, { desc = "Fold all functions" })
 
+-- Split the current file vertically
+map("n", "<leader>sv", "<cmd>vsplit<cr>", { desc = "Split window vertically" })
+
 -- map({ "n", "i", "v" }, "<C-s>", "<cmd> w <cr>")
