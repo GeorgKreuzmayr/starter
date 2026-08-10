@@ -3,31 +3,29 @@ require("nvchad.configs.lspconfig").defaults()
 local servers = { "html", "cssls" }
 vim.lsp.enable(servers)
 
-local os = vim.loop.os_uname().sysname
-local zls_path = os == "Darwin"
-    and "/Users/georg/code/zls/zig-out/bin/zls"
-    or  "/home/georg/code/zls/zig-out/bin/zls"
-
-vim.lsp.config("zls", {
-  cmd = { zls_path },
-  filetypes = { "zig", "zir" },
-  root_markers = { "build.zig", "build.zig.zon", ".git" },
-  on_init = function() end,  -- keep NvChad from stripping zls semantic tokens
-  settings = {
-    zls = {
-      enable_inlay_hints = true,
-      enable_snippets = true,
-      warn_style = false, -- our project uses snake_case fns; zls only knows std's camelCase rule
+local zls_path = vim.fn.exepath("zls")
+if zls_path ~= "" then
+  vim.lsp.config("zls", {
+    cmd = { zls_path },
+    filetypes = { "zig", "zir" },
+    root_markers = { "build.zig", "build.zig.zon", ".git" },
+    on_init = function() end,  -- keep NvChad from stripping zls semantic tokens
+    settings = {
+      zls = {
+        enable_inlay_hints = true,
+        enable_snippets = true,
+        warn_style = false, -- our project uses snake_case fns; zls only knows std's camelCase rule
+      },
     },
-  },
-})
+  })
 
-vim.api.nvim_create_autocmd("BufWritePre", {
-  pattern = "*.zig",
-  callback = function()
-    vim.lsp.buf.format { async = false }
-  end,
-})
+  vim.api.nvim_create_autocmd("BufWritePre", {
+    pattern = "*.zig",
+    callback = function()
+      vim.lsp.buf.format { async = false }
+    end,
+  })
 
-vim.lsp.enable("zls")
+  vim.lsp.enable("zls")
+end
 -- read :h vim.lsp.config for changing options of lsp servers
