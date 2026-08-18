@@ -45,6 +45,23 @@ map("n", "<leader>gB", function()
   require("gitsigns").toggle_current_line_blame()
 end, { desc = "Git blame toggle inline" })
 
+-- Changed files from `git diff HEAD`, with the diff in the preview pane.
+map("n", "<leader>gd", function()
+  require("git_diff").pick()
+end, { desc = "Git diff picker (vs HEAD)" })
+
+-- Write a commit message for whatever is staged; :w makes the commit.
+map("n", "<leader>gc", function()
+  require("git_commit").commit()
+end, { desc = "Git commit staged changes" })
+
+-- Commit log, delta-rendered like <leader>gd. Replaces NvChad's <leader>cm;
+-- pcall because deleting a mapping that is not there raises.
+map("n", "<leader>gl", function()
+  require("git_diff").log()
+end, { desc = "Git log (commits)" })
+pcall(vim.keymap.del, "n", "<leader>cm")
+
 -- Open the commit that last touched the current line on GitHub
 map("n", "<leader>go", function()
   require("gh_url").open_commit()
