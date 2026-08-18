@@ -12,6 +12,9 @@ vim.opt.number = true
 -- telescope, noice's cmdline, nvim-cmp -- are unaffected.
 vim.o.winborder = "rounded"
 
+-- Line length guide
+vim.opt.colorcolumn = "100"
+
 -- Treesitter-based folding
 vim.opt.foldmethod = "expr"
 vim.opt.foldexpr = "v:lua.vim.treesitter.foldexpr()" -- needs Neovim 0.10+

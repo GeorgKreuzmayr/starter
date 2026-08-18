@@ -23,6 +23,10 @@ M.base46 = {
     CursorLine     = { bg = "darker_black" },
     SignColumn     = { bg = "black" },
     WinSeparator   = { fg = "line" },
+    -- base46 defaults this to black2 (#F5EFD6), which is invisible against the
+    -- #FDF6E3 background. one_bg still reads as a guide, not a wall, and stays
+    -- distinct from CursorLine so the ruler survives the cursor's own line.
+    ColorColumn    = { bg = "one_bg" },
 
     -- ── Comments  (#93A1A1, italic) ──────────────────────────────────
     Comment        = { fg = "grey",  italic = true },
